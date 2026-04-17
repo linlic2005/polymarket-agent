@@ -1,0 +1,20 @@
+# ============================================================
+# 市场白名单配置
+# 规定了允许系统执行交易的类别与市场，以及严苛的规模要求
+# ============================================================
+
+allowed_categories:
+  - "Crypto"
+  - "Macro"
+  - "Politics"
+
+# 指定明确不能触碰的市场/主题 Slug 黑名单
+blacklisted_slugs:
+  - "nfts"
+  - "celebrity-gossip"
+
+market_liquidity_requirements:
+  min_liquidity_usd: 10000.0
+  min_volume_24h_usd: 5000.0
+
+global_trading_enabled: true

@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: polymarket-agent-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://polyuser:polypass@postgres:5432/polydb
+      - REDIS_URL=redis://redis:6379/0
+      - DRY_RUN=true
+      - APP_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: polymarket-agent-db
+    environment:
+      - POSTGRES_USER=polyuser
+      - POSTGRES_PASSWORD=polypass
+      - POSTGRES_DB=polydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polyuser -d polydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: polymarket-agent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data

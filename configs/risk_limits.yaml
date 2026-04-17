@@ -1,0 +1,36 @@
+# ============================================================
+# 风控限制配置 (严格保守型)
+# 用于核心 RiskEngine 系统阻截
+# ============================================================
+
+# 绝对白名单
+allowed_markets:
+  - "polymarket"
+
+# 最大单市场风险占比 (相对于总本金)
+max_position_fraction_per_market: 0.01
+
+# 最大同类/同主题风险占比 (相对于总本金)
+max_theme_fraction: 0.03
+
+# 每日最大新增风险敞口占比
+max_daily_new_risk_fraction: 0.02
+
+# 单体绝对熔断额: 日最高账面美金亏损
+max_daily_loss_usd: 500.0
+
+# 微观流动性要求与容错
+min_orderbook_depth_usd: 100.0
+
+# 盘口买卖最大跨度百分比基点: 120 bps = 1.2%
+max_spread_bps: 120
+
+# 极限最大滑点预期基点: 50 bps = 0.5%
+max_expected_slippage_bps: 50
+
+# 限制头寸最大持仓分钟数
+max_hold_minutes: 10080
+
+# 临近到期限制（规避过期前挤兑）
+near_expiry_hours_limit: 24
+near_expiry_cap: 0.005

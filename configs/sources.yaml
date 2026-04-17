@@ -1,0 +1,12 @@
+# ============================================================
+# 信号采集器 (Ingestor Sources) 配置
+# ============================================================
+
+6551_opennews:
+  enabled: true
+  webhook_secret_required: true
+  api_endpoint: "https://api.6551.opennews/v1"
+
+hermes:
+  enabled: true
+  polling_interval_seconds: 60

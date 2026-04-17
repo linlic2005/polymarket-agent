@@ -1,0 +1,23 @@
+# ============================================================
+# 仓位流转计算 (Sizing) 配置 - 净边际半凯利 (Net-Edge Half-Kelly)
+# ============================================================
+
+# Alpha / 知情者折价概率 (0即退阶为平局置信，极大压缩盲目自信)
+alpha: 0.5
+
+# 网络要求必须拥有的最底净套汇边际率
+min_edge_net: 0.01
+
+# 交易前置磨损及费用
+taker_fee_per_share: 0.01
+expected_slippage_per_share: 0.005  # 即 max_expected_slippage_bps
+
+# 退出防范准备金与不确定性抹点
+exit_cost_reserve: 0.01
+uncertainty_haircut: 0.02
+
+# 当前资金管理盘默认设置（按需提权）
+bankroll_usd: 10000.0
+
+# Taker/Maker执行策略
+maker_first: true
