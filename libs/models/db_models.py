@@ -167,6 +167,7 @@ class CandidateMarket(TimestampMixin, Base):
     token_no: Mapped[str] = mapped_column(String(256), nullable=False)
     mapping_score: Mapped[float] = mapped_column(Float, nullable=False, comment="0~1")
     rule_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    rule_text_changed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="规则文本是否已变更")
     orderbook_snapshot: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     spread_snapshot: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     time_to_resolution: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
@@ -217,6 +218,9 @@ class Position(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    candidate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=True, comment="关联的候选单 ID"
     )
     polymarket_condition_id: Mapped[str] = mapped_column(
         String(256), nullable=False, comment="Polymarket 条件 ID"
@@ -357,6 +361,21 @@ class MarketResolution(Base):
     resolved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
     payout_yes: Mapped[float] = mapped_column(Float, nullable=False)
     payout_no: Mapped[float] = mapped_column(Float, nullable=False)
+
+
+class RuleSnapshot(Base):
+    """规则文本历史快照，用于检测规则变更。"""
+
+    __tablename__ = "rule_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    candidate_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
+    rule_text: Mapped[str] = mapped_column(Text, nullable=False)
+    snapshot_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
 # ------------------------------------------------------------------ #

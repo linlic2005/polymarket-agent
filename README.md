@@ -204,12 +204,6 @@ curl -X POST 'http://localhost:8000/api/v1/ingestor/ingest/opennews/pull?limit=2
 - Webhook 推送重复事件返回 `409 Conflict`
 - 批量拉取自动跳过重复事件并在响应中统计
 
-### 6551 OpenNews
-
-通过三层架构接入 OpenNews 事件源：
-
-... (前面省略)
-
 ### Polymarket 市场数据与规则解析 (Mapper & Rules)
 利用提取的各类事件(News/Events)调用 **PolymarketMarketClient**，使用内部启发式的 **mapping_score** (综合实体标签/词汇交集度) 定位最佳市场匹配。映射记录会保存至 `candidate_markets` 表。
 针对每个 `CandidateMarket`：

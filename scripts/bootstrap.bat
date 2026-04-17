@@ -1,21 +1,59 @@
 @echo off
-echo =^> Bootstraping Polymarket Agent Environment...
+setlocal enabledelayedexpansion
 
-if not exist .env (
-    echo =^> 1. Creating .env from .env.example
-    copy .env.example .env
+echo.
+echo ============================================================
+echo Polymarket Agent - Bootstrap (Windows)
+echo ============================================================
+echo.
+
+REM Check for .env
+if exist "%~dp0..\.env" (
+    echo [OK] .env already exists, skipping.
 ) else (
-    echo =^> 1. .env already exists. Skipping.
+    echo [1/3] Creating .env from .env.example...
+    copy "%~dp0..\.env.example" "%~dp0..\.env"
+    echo [OK] .env created. Please edit it and fill in your API keys.
+    echo.
 )
 
-echo =^> 2. Creating python virtual environment
-python -m venv venv
-call venv\Scripts\activate.bat
+REM Create venv
+echo [2/3] Creating Python virtual environment...
+cd /d "%~dp0.."
+if exist venv (
+    echo [SKIP] venv already exists.
+) else (
+    python -m venv venv
+    echo [OK] venv created.
+)
+echo.
 
-echo =^> 3. Installing dependencies
-pip install -e .[dev]
+REM Install dependencies
+echo [3/3] Installing dependencies...
+call "%~dp0..\venv\Scripts\pip.exe" install -e .[dev]
+if errorlevel 1 (
+    echo [ERROR] Failed to install dependencies.
+    pause
+    exit /b 1
+)
+echo [OK] Dependencies installed.
+echo.
 
-echo =^> 4. (Optional) Run Database Migration
-echo If Docker Postgres is up, run: make db-upgrade
-
-echo =^> 5. Environment Ready! Run 'make dev' to start.
+REM Print next steps
+echo ============================================================
+echo Environment ready! Next steps:
+echo.
+echo   1. Edit .env and fill in your keys:
+echo      notepad "%~dp0..\.env"
+echo.
+echo   2. Start the database with Docker:
+echo      docker-compose up -d postgres redis
+echo.
+echo   3. Run database migrations:
+echo      make db-upgrade
+echo.
+echo   4. Start the dev server:
+echo      make dev
+echo.
+echo ============================================================
+pause
