@@ -1,0 +1,24 @@
+{
+  "payload": {
+    "id": "evt_test_001",
+    "title": "Test BTC prediction event",
+    "body": "Bitcoin to hit 100k by year end",
+    "category": "crypto",
+    "published_at": "2026-04-19T01:45:00Z",
+    "tags": ["Bitcoin", "Crypto"],
+    "symbols": ["BTC", "BTC-USD"],
+    "ai_score": 0.82,
+    "signal": "long"
+  },
+  "expected": {
+    "source": "opennews_6551",
+    "source_event_id": "evt_test_001",
+    "headline": "Test BTC prediction event",
+    "event_type": "crypto",
+    "entity_tags": ["Bitcoin", "Crypto"],
+    "symbol_tags": ["BTC", "BTC-USD"],
+    "ai_score": 0.82,
+    "signal_hint": "long",
+    "dedupe_hash": "b74cb73bc18f4511595ac142a755ffd73e751d8fe5edcd7ba7e219c5ef143aa0"
+  }
+}

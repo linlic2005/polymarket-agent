@@ -45,5 +45,5 @@ async def risk_check(
 @router.get("/limits", summary="查看当前风控限额")
 async def get_limits() -> dict[str, Any]:
     """返回当前生效的风控限额配置。"""
-    service = RiskEngineService.__new__(RiskEngineService)
-    return service.get_current_limits()
+    from libs.utils.yaml_loader import load_risk_limits
+    return load_risk_limits()

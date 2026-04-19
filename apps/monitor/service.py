@@ -19,8 +19,14 @@ logger = logging.getLogger(__name__)
 
 class MonitorService:
     def __init__(self, session: AsyncSession) -> None:
+        from libs.models.settings import get_settings
         self._session = session
-        self._adapter = PolymarketLiveAdapter()
+        settings = get_settings()
+        if settings.dry_run:
+            from libs.adapters.polymarket_paper import PolymarketPaperAdapter
+            self._adapter: PolymarketBaseAdapter = PolymarketPaperAdapter()
+        else:
+            self._adapter = PolymarketLiveAdapter()
         self._limits = load_risk_limits()
         self._max_daily_loss_usd = self._limits.get("max_daily_loss_usd", 500.0)
         self._max_hold_minutes = self._limits.get("max_hold_minutes", 10080)

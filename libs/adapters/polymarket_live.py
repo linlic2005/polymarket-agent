@@ -10,12 +10,19 @@ import os
 import logging
 from typing import Any
 
-from py_clob_client.client import ClobClient
-from py_clob_client.clob_types import ApiCreds, OrderArgs
-
 from libs.adapters.polymarket_base import PolymarketBaseAdapter
 
 logger = logging.getLogger(__name__)
+
+try:
+    from py_clob_client.client import ClobClient
+    from py_clob_client.clob_types import ApiCreds, OrderArgs
+    HAS_PY_CLOB_CLIENT = True
+except ImportError:
+    ClobClient = None
+    ApiCreds = None
+    OrderArgs = None
+    HAS_PY_CLOB_CLIENT = False
 
 
 class PolymarketLiveAdapter(PolymarketBaseAdapter):
@@ -32,6 +39,14 @@ class PolymarketLiveAdapter(PolymarketBaseAdapter):
 
     def _create_client(self) -> None:
         """Initialize the CLOB client if credentials are available."""
+        if not HAS_PY_CLOB_CLIENT:
+            logger.warning(
+                "[LiveAdapter] py-clob-client not installed. "
+                "Install it with: pip install py-clob-client"
+            )
+            self._client = None
+            return
+
         if not all([self.private_key, self.api_key, self.api_secret, self.passphrase]):
             logger.warning(
                 "[LiveAdapter] Missing partial credentials from environment variables. "

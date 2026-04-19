@@ -38,13 +38,3 @@ async def get_candidate_rules(
     service = RulesService(session)
     result = await service.get_and_parse_rules(candidate_id)
     return result
-
-@router.post("/evaluate/{event_id}", summary="评估事件是否触发信号")
-async def evaluate_event(
-    event_id: uuid.UUID,
-    session: AsyncSession = Depends(async_session_dependency),
-) -> dict[str, Any]:
-    """基于规则引擎评估事件是否满足交易信号条件。"""
-    service = RulesService(session)
-    result = await service.evaluate(event_id)
-    return result

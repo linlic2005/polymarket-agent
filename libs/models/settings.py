@@ -21,15 +21,15 @@ class Settings(BaseSettings):
 
     # ---------- 数据库 ----------
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/polymarket_agent"
-    database_url_sync: str = "postgresql://postgres:postgres@localhost:5432/polymarket_agent"
+    database_url_sync: str = "postgresql://postgres:***@localhost:5432/polymarket_agent"
 
     # ---------- Redis ----------
     redis_url: str = "redis://localhost:6379/0"
 
     # ---------- 6551 OpenNews ----------
-    opennews_token: str = ""
-    opennews_base_url: str = "https://api.opennews.6551.io/v1"
-    opennews_ws_url: str = "wss://ws.opennews.6551.io/v1/stream"
+    opennews_token: str = "change_me_token"
+    opennews_base_url: str = "https://ai.6551.io"
+    opennews_ws_url: str = ""
 
     # ---------- Polymarket ----------
     polymarket_private_key: str = ""
@@ -37,14 +37,14 @@ class Settings(BaseSettings):
     polymarket_api_secret: str = ""
     polymarket_passphrase: str = ""
 
-    # ---------- Hermes ----------
-    hermes_endpoint: str = ""
-    hermes_api_key: str = ""
-
-    # ---------- 应用 ----------
+    # ---------- 应用级配置 ----------
     app_env: str = "development"
     dry_run: bool = True
     log_level: str = "INFO"
+
+    # ---------- Hermes ----------
+    hermes_endpoint: str = "http://127.0.0.1:8642"
+    hermes_api_key: str = ""
 
 
 @lru_cache

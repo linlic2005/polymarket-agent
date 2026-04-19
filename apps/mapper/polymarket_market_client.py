@@ -87,79 +87,107 @@ class PolymarketMarketClient:
         logger.info("[PolymarketMarketClient] Found %d matching events", len(matching_events))
         return matching_events
 
-    async def get_event_rules(self, event_slug: str) -> str:
+    async def get_event_rules(self, market_id: str) -> str:
         """
-        根据 event slug 获取详细的 rule_text，通常包含判定源、过期细节等。
+        根据 market id 获取详细的 rule_text（description），包含判定源、过期细节等。
+
+        Polymarket 的 /markets/{id} 端点返回完整的 description 字段，
+        其中包含 resolution source 和结束条件。
 
         Args:
-            event_slug: 事件 Slug
+            market_id: 市场 ID（Polymarket 数字 ID，非 condition_id）
 
         Returns:
-            解析出的规则文本字符串
+            规则文本字符串
         """
-        logger.info("[PolymarketMarketClient] get_event_rules(event_slug=%r)", event_slug)
+        logger.info("[PolymarketMarketClient] get_event_rules(market_id=%r)", market_id)
 
-        # GET /events/{slug}
-        data = await self._safe_get(f"/events/{event_slug}")
+        # GET /markets/{id}  — 返回单个市场的完整描述（含 resolution source）
+        data = await self._safe_get(f"/markets/{market_id}")
 
-        if data is None:
-            logger.warning("[PolymarketMarketClient] Failed to fetch event %s, returning default rules", event_slug)
+        # _safe_get 返回 None / dict，但 /markets/{id} 返回 [list] 需要特殊处理
+        # 实际返回是 list[dict]，_safe_get 不认识会走异常分支
+        # 改用直接调用
+        try:
+            client = await self._get_http()
+            response = await client.get(f"/markets/{market_id}")
+            response.raise_for_status()
+            result = response.json()
+            # markets endpoint 返回 list
+            if isinstance(result, list):
+                data = result[0] if result else {}
+            elif isinstance(result, dict):
+                data = result
+            else:
+                data = {}
+        except Exception:
+            logger.warning("[PolymarketMarketClient] Failed to fetch market %s", market_id)
             return "Rules details: Unable to fetch event rules from API."
 
-        # Extract rule_text from the event data
-        rule_text = data.get("rule_text", "") or data.get("description", "")
+        if not data:
+            return "Rules details: Unable to fetch event rules from API."
+
+        # Extract description as rule_text
+        rule_text = data.get("description", "") or data.get("question", "")
         if not rule_text:
-            # Try to construct from available fields
-            question = data.get("question", "Unknown question")
-            start_date = data.get("start_date", "")
-            end_date = data.get("end_date", "")
-            rule_text = f"Question: {question}. "
-            if start_date:
-                rule_text += f"Starts: {start_date}. "
-            if end_date:
-                rule_text += f"Ends: {end_date}. "
-            if not start_date and not end_date:
-                rule_text = f"Rules details: If resolution source reports YES before the market expires, resolves to YES. Otherwise NO."
+            rule_text = "Rules details: No description available for this market."
 
         return rule_text
 
-    async def get_market_orderbook(self, token_id: str) -> dict[str, Any]:
+    async def get_market_orderbook(self, market_id: str) -> dict[str, Any]:
         """
-        获取指定 token (Outcome) 的 Orderbook。
+        获取指定市场的订单簿快照。
+
+        Polymarket 的 /markets/{id} 返回完整市场数据，其中：
+        - bestBid / bestAsk: 当前最优买卖价
+        - spread: 买卖价差
+        - order_book.bids / order_book.asks: 完整档口（如果有）
 
         Args:
-            token_id: Outcome Token ID (如 YES 的 tokenId)
+            market_id: Polymarket 市场数字 ID
 
         Returns:
-            Orderbook字典，包含bids、asks等
+            包含 bids、asks、spread 的字典
         """
-        logger.info("[PolymarketMarketClient] get_market_orderbook(token_id=%r)", token_id)
+        logger.info("[PolymarketMarketClient] get_market_orderbook(market_id=%r)", market_id)
 
-        # GET /markets/{token_id} which includes order_book
-        data = await self._safe_get(f"/markets/{token_id}")
+        try:
+            client = await self._get_http()
+            response = await client.get(f"/markets/{market_id}")
+            response.raise_for_status()
+            result = response.json()
+            # markets endpoint 返回 list
+            if isinstance(result, list):
+                data = result[0] if result else {}
+            elif isinstance(result, dict):
+                data = result
+            else:
+                data = {}
+        except Exception:
+            logger.warning("[PolymarketMarketClient] Failed to fetch market %s", market_id)
+            return {"bids": [], "asks": [], "spread": 0.0, "best_bid": None, "best_ask": None}
 
-        if data is None:
-            logger.warning("[PolymarketMarketClient] Failed to fetch market %s, returning empty orderbook", token_id)
-            return {"bids": [], "asks": [], "spread": 0.0}
+        best_bid = data.get("bestBid")
+        best_ask = data.get("bestAsk")
+        spread = data.get("spread", 0.0)
 
-        order_book = data.get("order_book", {})
-        if not order_book:
-            return {"bids": [], "asks": [], "spread": 0.0}
+        # Try nested order_book for full depth
+        order_book = data.get("order_book", {}) or {}
+        bids = order_book.get("bids", []) if isinstance(order_book, dict) else []
+        asks = order_book.get("asks", []) if isinstance(order_book, dict) else []
 
-        bids = order_book.get("bids", [])
-        asks = order_book.get("asks", [])
-
-        # Calculate spread if possible
-        spread = 0.0
-        if bids and asks:
-            best_bid = float(bids[0].get("price", 0)) if bids else 0.0
-            best_ask = float(asks[0].get("price", 0)) if asks else 0.0
-            spread = best_ask - best_bid
+        # If no nested book, fall back to top-level prices
+        if not bids and best_bid is not None:
+            bids = [{"price": best_bid, "size": None}]
+        if not asks and best_ask is not None:
+            asks = [{"price": best_ask, "size": None}]
 
         return {
             "bids": bids,
             "asks": asks,
-            "spread": spread
+            "spread": float(spread) if spread else 0.0,
+            "best_bid": float(best_bid) if best_bid is not None else None,
+            "best_ask": float(best_ask) if best_ask is not None else None,
         }
 
     async def close(self) -> None:
